@@ -24,6 +24,8 @@ class User extends Authenticatable
         'role',    // Tambahan penting
         'address', // Tambahan
         'phone',   // Tambahan
+        'class',
+        'nis',
     ];
 
     /**

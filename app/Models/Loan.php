@@ -8,17 +8,25 @@ use Illuminate\Database\Eloquent\Model;
 class Loan extends Model
 {
     use HasFactory;
+
+    // Bagian ini PENTING. Semua kolom yang ingin disimpan wajib ditulis di sini.
     protected $fillable = [
-        'user_id', 'tool_id', 'loan_date', 'return_date', 'actual_return_date', 'status'
+        'user_id',
+        'tool_id',
+        'loan_date',
+        'return_date',          // Tanggal Rencana Kembali
+        'actual_return_date',   // Tanggal Asli Kembali
+        'status',
+        'fine',                 
     ];
 
-    // Relasi ke User (Peminjam)
+    // Relasi ke User
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    // Relasi ke Alat
+    // Relasi ke Tool (Alat)
     public function tool()
     {
         return $this->belongsTo(Tool::class);

@@ -45,4 +45,28 @@ class LoanController extends Controller
 
         return back()->with('success', 'Pengajuan berhasil! Menunggu persetujuan admin.');
     }
+
+    // Fungsi untuk User mengklik tombol "Kembalikan"
+    public function returnTool($id)
+    {
+        $loan = Loan::findOrFail($id);
+
+        // Pastikan hanya peminjam yang bersangkutan yang bisa akses
+        if ($loan->user_id != Auth::id()) {
+            abort(403);
+        }
+
+        // Ubah status menjadi 'returning' (Proses Pengembalian)
+        $loan->update([
+            'status' => 'returning',
+        ]);
+
+        ActivityLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'Ajukan Pengembalian',
+            'description' => 'User mengajukan pengembalian alat: ' . $loan->tool->name,
+        ]);
+
+        return back()->with('success', 'Permintaan pengembalian dikirim. Silakan serahkan alat ke Petugas.');
+    }
 }

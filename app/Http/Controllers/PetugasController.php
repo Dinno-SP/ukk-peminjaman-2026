@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
 use App\Models\Loan;
 use App\Models\Tool;
 use Illuminate\Http\Request;
@@ -17,7 +18,9 @@ class PetugasController extends Controller
         $pendings = Loan::with(['user', 'tool'])->where('status', 'pending')->get();
         
         // Ambil data yang statusnya 'approved' (Sedang Dipinjam)
-        $actives = Loan::with(['user', 'tool'])->where('status', 'approved')->get();
+        $actives = Loan::with(['user', 'tool'])
+            ->whereIn('status', ['approved', 'returning']) // Pakai whereIn
+            ->get();
         
         // Ambil semua data untuk riwayat/laporan
         $history = Loan::with(['user', 'tool'])->whereIn('status', ['returned', 'rejected'])->get();
@@ -62,25 +65,64 @@ class PetugasController extends Controller
 
     // 4. Aksi: Proses Pengembalian Barang
     public function complete($id)
+        {
+            $loan = Loan::findOrFail($id);
+            
+            // 1. Kembalikan stok alat
+            $tool = Tool::findOrFail($loan->tool_id);
+            $tool->increment('stock');
+
+            // 2. Hitung Denda (PERBAIKAN LOGIKA)
+            // Kita pakai startOfDay() supaya jam/menit/detik diabaikan. Fokus ke tanggal saja.
+            $tanggalRencana = Carbon::parse($loan->return_date)->startOfDay(); 
+            $tanggalKembali = Carbon::now()->startOfDay(); 
+            
+            $denda = 0;
+            $jumlahHariTelat = 0;
+
+            // Cek apakah tanggal kembali LEBIH BESAR dari rencana
+            if ($tanggalKembali->greaterThan($tanggalRencana)) {
+                $jumlahHariTelat = $tanggalKembali->diffInDays($tanggalRencana);
+                $denda = $jumlahHariTelat * 1000;
+            }
+
+            // 3. Update data peminjaman
+            $loan->update([
+                'status' => 'returned',
+                'actual_return_date' => Carbon::now(), // Untuk database tetap simpan jam aslinya
+                'fine' => $denda,
+            ]);
+            
+            ActivityLog::create([
+                'user_id' => Auth::id(),
+                'action' => 'Terima Pengembalian',
+                'description' => 'Menerima pengembalian ' . $loan->tool->name . '. Denda: Rp ' . number_format($denda),
+            ]);
+
+            if ($denda > 0) {
+                return back()->with('success', 'Terlambat ' . $jumlahHariTelat . ' hari. Denda: Rp ' . number_format($denda));
+            }
+
+            return back()->with('success', 'Alat dikembalikan tepat waktu.');
+        }
+
+    // 5. Fitur Lihat Laporan & Filter Tanggal
+    public function laporan(Request $request)
     {
-        $loan = Loan::findOrFail($id);
-        
-        // Kembalikan stok alat
-        $tool = Tool::findOrFail($loan->tool_id);
-        $tool->increment('stock');
+        // Ambil input tanggal dari form filter
+        $tanggal = $request->input('date');
 
-        // Update status dan tanggal kembali asli
-        $loan->update([
-            'status' => 'returned',
-            'actual_return_date' => now(),
-        ]);
-        
-        ActivityLog::create([
-            'user_id' => Auth::id(),
-            'action' => 'Terima Pengembalian',
-            'description' => 'Menerima pengembalian ' . $loan->tool->name . ' dari ' . $loan->user->name,
-        ]);
+        // Query dasar: Ambil semua peminjaman beserta user dan alatnya
+        $query = Loan::with(['user', 'tool']);
 
-        return back()->with('success', 'Alat berhasil dikembalikan. Stok bertambah.');
+        // Jika user memilih tanggal, tambahkan filter
+        if ($tanggal) {
+            $query->whereDate('loan_date', $tanggal);
+        }
+
+        // Ambil datanya (urutkan dari yang terbaru)
+        $loans = $query->latest()->get();
+
+        return view('petugas.laporan', compact('loans', 'tanggal'));
     }
 }

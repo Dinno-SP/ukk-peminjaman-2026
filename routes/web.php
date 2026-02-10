@@ -23,6 +23,9 @@ Route::get('/dashboard', function () {
 
 // 2. Jalur Khusus Admin
 Route::middleware(['auth', 'role:admin'])->group(function () {
+    Route::resource('admin/loans', \App\Http\Controllers\AdminLoanController::class, [
+        'names' => 'admin.loans' // Ini memberi nama route seperti admin.loans.index, admin.loans.edit
+    ]);
     Route::get('/admin/dashboard', function () {
         $total_users = \App\Models\User::count();
         $total_tools = \App\Models\Tool::count();
@@ -46,6 +49,8 @@ Route::middleware(['auth', 'role:petugas'])->group(function () {
     Route::post('/petugas/approve/{id}', [PetugasController::class, 'approve'])->name('petugas.approve');
     Route::post('/petugas/reject/{id}', [PetugasController::class, 'reject'])->name('petugas.reject');
     Route::post('/petugas/return/{id}', [PetugasController::class, 'complete'])->name('petugas.return');
+
+    Route::get('/petugas/laporan', [PetugasController::class, 'laporan'])->name('petugas.laporan');
 });
 
 // 4. Jalur Khusus Peminjam (Siswa)
@@ -60,6 +65,7 @@ Route::middleware(['auth', 'role:peminjam'])->group(function () {
 
     // Tambahkan jalur untuk proses pinjam
     Route::post('/loans', [App\Http\Controllers\LoanController::class, 'store'])->name('loan.store');
+    Route::post('/loans/return/{id}', [App\Http\Controllers\LoanController::class, 'returnTool'])->name('loan.return');
 });
 
 // 5. Rute Profile 

@@ -28,19 +28,29 @@ class UserController extends Controller
             'email' => 'required|email|unique:users',
             'password' => 'required|min:8',
             'role' => 'required|in:admin,petugas,peminjam',
+            // Validasi tambahan (opsional, boleh kosong)
+            'phone' => 'nullable|string',
+            'address' => 'nullable|string',
+            'class' => 'nullable|string',
+            'nis' => 'nullable|string',
         ]);
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'password' => Hash::make($request->password), // Password wajib di-hash
+            'password' => Hash::make($request->password),
             'role' => $request->role,
+            // Masukkan data tambahan
+            'phone' => $request->phone,
+            'address' => $request->address,
+            'class' => $request->class,
+            'nis' => $request->nis,
         ]);
 
         ActivityLog::create([
             'user_id' => Auth::id(),
             'action' => 'Tambah User',
-            'description' => 'Menambahkan user baru: ' . $user->name . ' (' . $user->role . ')',
+            'description' => 'Menambahkan user baru: ' . $user->name,
         ]);
 
         return redirect()->route('users.index')->with('success', 'User berhasil ditambahkan!');
@@ -63,9 +73,13 @@ class UserController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'role' => $request->role,
+            // Masukkan data tambahan ke array update
+            'phone' => $request->phone,
+            'address' => $request->address,
+            'class' => $request->class,
+            'nis' => $request->nis,
         ];
 
-        // Update password hanya jika diisi
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
         }

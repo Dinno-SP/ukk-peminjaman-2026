@@ -1,3 +1,69 @@
+-- CARA MENJALANKAN --
+
+1. Nyalakan XAMPP (Start Apache & MySQL).
+
+2. Buka Terminal (CMD / Git Bash).
+
+3. Masuk ke folder penyimpanan htdocs:
+
+cd C:\xampp\htdocs
+
+4. Jalankan di dalam terminal:
+
+git clone https://github.com/Dinno-SP/ukk-peminjaman-2026.git
+
+cd ukk-peminjaman-2026
+
+composer install
+
+copy .env.example .env
+
+php artisan key:generate
+
+5. Buka browser, ketik: localhost/phpmyadmin
+
+6. Buat Database Baru. Beri nama persis: ukk_peminjaman
+
+7. edit .env:
+
+DB_CONNECTION=mysql
+
+DB_HOST=127.0.0.1
+
+DB_PORT=3306
+
+DB_DATABASE=ukk_peminjaman
+
+DB_USERNAME=root
+
+DB_PASSWORD=
+
+8. Ketik perintah ini di terminal:
+
+php artisan migrate:fresh --seed
+
+php artisan storage:link
+
+9. Ketik perintah ini di terminal vscode:
+
+npm install
+
+npm run build
+
+php artisan serve
+
+10. Buka browser dan akses: http://127.0.0.1:8000
+
+11. Login User:
+
+admin@sekolah.com / password
+
+petugas@sekolah.com / password
+
+siswa@sekolah.com / password
+
+-- SELESAI --
+
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
 <p align="center">
